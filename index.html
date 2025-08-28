@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Renomeador de Arquivos</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        background-color: #f0f0f0;
+    }
+    input, button {
+        padding: 10px;
+        font-size: 16px;
+        margin: 5px 0;
+    }
+    #fileList, #result {
+        margin-top: 20px;
+        background-color: #fff;
+        padding: 15px;
+        border-radius: 8px;
+    }
+    .filename {
+        margin: 5px 0;
+    }
+</style>
+</head>
+<body>
+
+<h2>Renomeador de Arquivos</h2>
+
+<label for="clientName">Nome do Cliente:</label><br>
+<input type="text" id="clientName" placeholder="Digite o nome do cliente"><br>
+
+<label for="files">Selecione os arquivos:</label><br>
+<input type="file" id="files" multiple><br>
+
+<button onclick="renameFiles()">Renomear e Baixar</button>
+
+<div id="fileList"></div>
+<div id="result"></div>
+
+<script>
+const templateFiles = [
+    "01 [CLIENTE] REQUERIMENTO SINARM.pdf",
+    "02 [CLIENTE] FOTO 3X4 RECENTE.pdf",
+    "03 04 [CLIENTE] CNH.pdf",
+    "05 [CLIENTE] CERTIDÃO NEGATIVA DE ANTECEDENTES DA JUSTIÇA FEDERAL.pdf",
+    "06 [CLIENTE] CERTIDÃO NEGATIVA DE ANTECEDENTES DA JUSTIÇA ESTADUAL.pdf",
+    "07 [CLIENTE] CERTIDÃO NEGATIVA DE ANTECEDENTES DA JUSTIÇA MILITAR.pdf",
+    "08 [CLIENTE] CERTIDÃO NEGATIVA DE ANTECEDENTES DA JUSTIÇA ELEITORAL.pdf",
+    "09 [CLIENTE] DOCUMENTO COMPROBATÓRIO DE OCUPAÇÃO LÍCITA.pdf",
+    "10 [CLIENTE] COMPROVANTE DE RESIDÊNCIA.pdf",
+    "11 [CLIENTE] LAUDO PSICOLÓGICO.pdf",
+    "12 [CLIENTE] AVALIAÇÃO DO INSTRUTOR DE TIRO.pdf",
+    "13 [CLIENTE] COMPROVANTE BANCÁRIO DE PAGAMENTO DA TAXA.pdf",
+    "14 [CLIENTE] OUTROS DOCUMENTOS.pdf"
+];
+
+function renameFiles() {
+    const client = document.getElementById('clientName').value.trim();
+    const files = document.getElementById('files').files;
+
+    if (!client) {
+        alert("Digite o nome do cliente!");
+        return;
+    }
+
+    if (files.length === 0) {
+        alert("Selecione os arquivos!");
+        return;
+    }
+
+    const fileListDiv = document.getElementById('fileList');
+    fileListDiv.innerHTML = "<h3>Arquivos Selecionados:</h3>";
+    Array.from(files).forEach(file => {
+        const div = document.createElement('div');
+        div.textContent = file.name;
+        fileListDiv.appendChild(div);
+    });
+
+    const resultDiv = document.getElementById('result');
+    resultDiv.innerHTML = "<h3>Arquivos Renomeados e Prontos para Download:</h3>";
+
+    for (let i = 0; i < files.length && i < templateFiles.length; i++) {
+        const newName = templateFiles[i].replace("[CLIENTE]", client);
+
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(files[i]);
+        link.download = newName;
+        link.textContent = newName;
+        link.className = 'filename';
+        link.style.display = 'block';
+
+        resultDiv.appendChild(link);
+    }
+
+    alert("Clique nos links para baixar os arquivos renomeados.");
+}
+</script>
+
+</body>
+</html>
