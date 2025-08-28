@@ -6,9 +6,7 @@
 <title>Renomeador e Zip de Arquivos</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.11.1/jszip.min.js"></script>
 <style>
-    /* RESET BÁSICO */
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         background: linear-gradient(135deg, #667eea, #764ba2);
@@ -16,21 +14,13 @@
         padding: 30px;
         min-height: 100vh;
     }
-
     h2 {
         color: #fff;
         text-align: center;
         margin-bottom: 20px;
         text-shadow: 1px 1px 4px rgba(0,0,0,0.3);
     }
-
-    label {
-        font-weight: 600;
-        display: block;
-        margin-bottom: 5px;
-        color: #444;
-    }
-
+    label { font-weight: 600; display: block; margin-bottom: 5px; color: #444; }
     input[type="text"], input[type="file"] {
         width: 100%;
         padding: 12px 15px;
@@ -41,12 +31,10 @@
         transition: all 0.3s ease;
         background-color: #f9f9f9;
     }
-
     input[type="text"]:focus, input[type="file"]:focus {
         border-color: #667eea;
         box-shadow: 0 0 10px rgba(102,126,234,0.4);
     }
-
     .file-input {
         background-color: #fff;
         padding: 15px;
@@ -55,11 +43,7 @@
         margin-bottom: 15px;
         transition: transform 0.2s;
     }
-
-    .file-input:hover {
-        transform: translateY(-3px);
-    }
-
+    .file-input:hover { transform: translateY(-3px); }
     button {
         width: 100%;
         padding: 15px;
@@ -73,13 +57,11 @@
         transition: all 0.3s ease;
         box-shadow: 0 5px 15px rgba(102,126,234,0.4);
     }
-
     button:hover {
         background: #5a67d8;
         transform: translateY(-2px);
         box-shadow: 0 8px 20px rgba(102,126,234,0.5);
     }
-
     #result {
         margin-top: 25px;
         background-color: #fff;
@@ -87,7 +69,6 @@
         border-radius: 15px;
         box-shadow: 0 8px 25px rgba(0,0,0,0.15);
     }
-
     #result a {
         display: block;
         padding: 10px;
@@ -98,14 +79,11 @@
         border-radius: 8px;
         transition: all 0.3s ease;
     }
-
     #result a:hover {
         background: #667eea;
         transform: translateY(-2px);
         box-shadow: 0 5px 15px rgba(102,126,234,0.4);
     }
-
-    /* Responsivo */
     @media(max-width:600px){
         body { padding: 15px; }
         button { font-size: 14px; padding: 12px; }
@@ -174,9 +152,19 @@ function generateZip() {
     zip.generateAsync({type:"blob"})
     .then(function(content){
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(content);
+        const url = URL.createObjectURL(content);
+        a.href = url;
         a.download = client + "_arquivos.zip";
+
+        // Adiciona ao DOM temporariamente e clica
+        document.body.appendChild(a);
         a.click();
+
+        // Remove link e libera memória
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 100);
     });
 }
 
@@ -187,3 +175,4 @@ function getExtension(filename){
 
 </body>
 </html>
+
