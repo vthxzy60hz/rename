@@ -3,100 +3,185 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Renomeador de Arquivos</title>
+<title>Renomeador e Zip de Arquivos</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.11.1/jszip.min.js"></script>
 <style>
+    /* RESET BÁSICO */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-        font-family: Arial, sans-serif;
-        padding: 20px;
-        background-color: #f0f0f0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: #333;
+        padding: 30px;
+        min-height: 100vh;
     }
-    input, button {
-        padding: 10px;
-        font-size: 16px;
-        margin: 5px 0;
+
+    h2 {
+        color: #fff;
+        text-align: center;
+        margin-bottom: 20px;
+        text-shadow: 1px 1px 4px rgba(0,0,0,0.3);
     }
-    #fileList, #result {
-        margin-top: 20px;
+
+    label {
+        font-weight: 600;
+        display: block;
+        margin-bottom: 5px;
+        color: #444;
+    }
+
+    input[type="text"], input[type="file"] {
+        width: 100%;
+        padding: 12px 15px;
+        margin-bottom: 15px;
+        border: 2px solid #ccc;
+        border-radius: 12px;
+        outline: none;
+        transition: all 0.3s ease;
+        background-color: #f9f9f9;
+    }
+
+    input[type="text"]:focus, input[type="file"]:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 10px rgba(102,126,234,0.4);
+    }
+
+    .file-input {
         background-color: #fff;
         padding: 15px;
-        border-radius: 8px;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        margin-bottom: 15px;
+        transition: transform 0.2s;
     }
-    .filename {
-        margin: 5px 0;
+
+    .file-input:hover {
+        transform: translateY(-3px);
+    }
+
+    button {
+        width: 100%;
+        padding: 15px;
+        background: #667eea;
+        color: #fff;
+        font-size: 16px;
+        font-weight: bold;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(102,126,234,0.4);
+    }
+
+    button:hover {
+        background: #5a67d8;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(102,126,234,0.5);
+    }
+
+    #result {
+        margin-top: 25px;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    #result a {
+        display: block;
+        padding: 10px;
+        margin-bottom: 8px;
+        color: #fff;
+        background: #764ba2;
+        text-decoration: none;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    #result a:hover {
+        background: #667eea;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102,126,234,0.4);
+    }
+
+    /* Responsivo */
+    @media(max-width:600px){
+        body { padding: 15px; }
+        button { font-size: 14px; padding: 12px; }
+        input[type="text"], input[type="file"] { padding: 10px; }
     }
 </style>
 </head>
 <body>
 
-<h2>Renomeador de Arquivos</h2>
+<h2>Renomeador e Zip de Arquivos</h2>
 
-<label for="clientName">Nome do Cliente:</label><br>
+<label>Nome do Cliente:</label>
 <input type="text" id="clientName" placeholder="Digite o nome do cliente"><br>
 
-<label for="files">Selecione os arquivos:</label><br>
-<input type="file" id="files" multiple><br>
+<div id="fileInputs"></div>
 
-<button onclick="renameFiles()">Renomear e Baixar</button>
+<button onclick="generateZip()">Renomear e Baixar .ZIP</button>
 
-<div id="fileList"></div>
 <div id="result"></div>
 
 <script>
-const templateFiles = [
-    "01 [CLIENTE] REQUERIMENTO SINARM.pdf",
-    "02 [CLIENTE] FOTO 3X4 RECENTE.pdf",
-    "03 04 [CLIENTE] CNH.pdf",
-    "05 [CLIENTE] CERTIDÃO NEGATIVA DE ANTECEDENTES DA JUSTIÇA FEDERAL.pdf",
-    "06 [CLIENTE] CERTIDÃO NEGATIVA DE ANTECEDENTES DA JUSTIÇA ESTADUAL.pdf",
-    "07 [CLIENTE] CERTIDÃO NEGATIVA DE ANTECEDENTES DA JUSTIÇA MILITAR.pdf",
-    "08 [CLIENTE] CERTIDÃO NEGATIVA DE ANTECEDENTES DA JUSTIÇA ELEITORAL.pdf",
-    "09 [CLIENTE] DOCUMENTO COMPROBATÓRIO DE OCUPAÇÃO LÍCITA.pdf",
-    "10 [CLIENTE] COMPROVANTE DE RESIDÊNCIA.pdf",
-    "11 [CLIENTE] LAUDO PSICOLÓGICO.pdf",
-    "12 [CLIENTE] AVALIAÇÃO DO INSTRUTOR DE TIRO.pdf",
-    "13 [CLIENTE] COMPROVANTE BANCÁRIO DE PAGAMENTO DA TAXA.pdf",
-    "14 [CLIENTE] OUTROS DOCUMENTOS.pdf"
+const filesTemplate = [
+    {id:1, label:"01 REQUERIMENTO ASSINADO"},
+    {id:2, label:"02 FOTO 3X4 RECENTE"},
+    {id:3, label:"03 04 CNH"},
+    {id:5, label:"05 CERTIDÃO NEGATIVA DE ANTECEDENTES DA JUSTIÇA FEDERAL"},
+    {id:6, label:"06 CERTIDÃO NEGATIVA DE ANTECEDENTES DA JUSTIÇA ESTADUAL"},
+    {id:7, label:"07 CERTIDÃO NEGATIVA DE ANTECEDENTES DA JUSTIÇA MILITAR"},
+    {id:8, label:"08 CERTIDÃO NEGATIVA DE ANTECEDENTES DA JUSTIÇA ELEITORAL"},
+    {id:9, label:"09 DOCUMENTO COMPROBATÓRIO DE OCUPAÇÃO LÍCITA"},
+    {id:10, label:"10 COMPROVANTE DE RESIDÊNCIA"},
+    {id:11, label:"11 LAUDO PSICOLÓGICO"},
+    {id:12, label:"12 AVALIAÇÃO DO INSTRUTOR DE TIRO"},
+    {id:13, label:"13 COMPROVANTE BANCÁRIO DE PAGAMENTO DA TAXA"},
+    {id:14, label:"14 OUTROS DOCUMENTOS"}
 ];
 
-function renameFiles() {
+// Gerar inputs para cada arquivo
+const fileInputsDiv = document.getElementById('fileInputs');
+filesTemplate.forEach(f => {
+    const div = document.createElement('div');
+    div.className = "file-input";
+    div.innerHTML = `<label>${f.label}:</label><br><input type="file" id="file${f.id}"><br>`;
+    fileInputsDiv.appendChild(div);
+});
+
+function generateZip() {
     const client = document.getElementById('clientName').value.trim();
-    const files = document.getElementById('files').files;
+    if(!client) { alert("Digite o nome do cliente!"); return; }
 
-    if (!client) {
-        alert("Digite o nome do cliente!");
-        return;
-    }
+    const zip = new JSZip();
+    let addedFile = false;
 
-    if (files.length === 0) {
-        alert("Selecione os arquivos!");
-        return;
-    }
-
-    const fileListDiv = document.getElementById('fileList');
-    fileListDiv.innerHTML = "<h3>Arquivos Selecionados:</h3>";
-    Array.from(files).forEach(file => {
-        const div = document.createElement('div');
-        div.textContent = file.name;
-        fileListDiv.appendChild(div);
+    filesTemplate.forEach(f => {
+        const fileInput = document.getElementById('file' + f.id);
+        if(fileInput.files.length > 0){
+            const file = fileInput.files[0];
+            const newName = f.label.replace(f.label.split(' ')[1], client); 
+            zip.file(newName + getExtension(file.name), file);
+            addedFile = true;
+        }
     });
 
-    const resultDiv = document.getElementById('result');
-    resultDiv.innerHTML = "<h3>Arquivos Renomeados e Prontos para Download:</h3>";
+    if(!addedFile) { alert("Selecione pelo menos um arquivo!"); return; }
 
-    for (let i = 0; i < files.length && i < templateFiles.length; i++) {
-        const newName = templateFiles[i].replace("[CLIENTE]", client);
+    zip.generateAsync({type:"blob"})
+    .then(function(content){
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(content);
+        a.download = client + "_arquivos.zip";
+        a.click();
+    });
+}
 
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(files[i]);
-        link.download = newName;
-        link.textContent = newName;
-        link.className = 'filename';
-        link.style.display = 'block';
-
-        resultDiv.appendChild(link);
-    }
-
-    alert("Clique nos links para baixar os arquivos renomeados.");
+function getExtension(filename){
+    return filename.substring(filename.lastIndexOf('.'));
 }
 </script>
 
